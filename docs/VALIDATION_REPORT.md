@@ -1,129 +1,69 @@
-# Validação final do port Resident Evil 4 Mobile — R36S/ArkOS
+# Final validation report — Resident Evil 4 Mobile R36S/dArkOS PortMaster
 
-## Veredito
+**Date:** 28 August 2026
+**Release:** `v0.3.1-beta`
+**Asset:** `Resident-Evil-4-Mobile-R36S-dArkOS-PortMaster-fixed-v0.3.1.zip`
 
-A versão corrigida **resolveu o travamento que ocorria no primeiro frame**. O host ARMHF iniciou o Mascot Capsule e o game core, criou o contexto SDL/EGL/GLES, passou por `draw frame 0`, `draw frame 1` e `draw frame 2` e permaneceu estável durante os testes prolongados.
+## Verdict
 
-Com base nos testes realizados, minha estimativa é que o port tem **alta probabilidade de iniciar e apresentar imagem no R36S**. A probabilidade de o conjunto completo — imagem, áudio, controles, saves e retorno ao menu — funcionar sem ajustes é **boa, mas não absoluta**, porque o sandbox não possui o LCD, o chip gráfico, o alto-falante nem os botões físicos do seu aparelho.
+The corrected package is a **PortMaster port of the supplied Resident Evil 4 Mobile ARMHF build**. It is not a PS2 emulator, remake, or newly authored game. It adapts the supplied host and mobile data to the PortMaster/dArkOS launcher conventions.
 
-| Área | Resultado da validação | Confiança atual |
+The package follows the current PortMaster structure: a Bash launcher, a matching port directory, `port.json`, `gameinfo.xml`, README, screenshot and license material. PortMaster's packaging guidance requires this structure and documents `get_controls`, `SDL_GAMECONTROLLERCONFIG`, `pm_platform_helper`, gptokeyb and architecture-specific libraries [1] [2].
+
+| Area | Result | Confidence |
 |---|---|---:|
-| Instalação e arquitetura | Pacote íntegro, host ARMHF hard-float e estrutura de port compatível | Alta |
-| Inicialização do jogo | Mascot Capsule, game core, JNI e ciclo de vida iniciaram corretamente | Alta |
-| Renderização | Primeiro frame passou sem SIGSEGV; milhares de frames foram processados | Alta para inicialização |
-| Imagem no LCD do R36S | Não observada diretamente | Ainda não confirmada |
-| Áudio SDL | Teste de 44.100 Hz, mono e buffer de 1.024 amostras passou | Alta para o caminho SDL |
-| Áudio audível do jogo | Não foi possível ouvir no sandbox | Moderada |
-| Controles | Eventos SDL KEYDOWN/KEYUP e conversão para códigos Android existem | Moderada |
-| Mapeamento físico do R36S | Não foi possível pressionar os botões reais | Ainda não confirmado |
-| Estabilidade | 60 segundos headless e sessão offscreen prolongada sem crash | Alta no ambiente emulado |
-| Save/load e retorno ao EmulationStation | Não exercitados no hardware | Não confirmado |
+| PortMaster tree and metadata | 52 files, 35 assets, zero validator errors; official release checker passed | High |
+| ARMHF architecture | Host is 32-bit ARM hard-float; launcher declares `PORT_32BIT=Y` | High |
+| Asset names and paths | Proprietary data names match the host's file manager; misleading `.png` suffixes removed | High |
+| Launcher/helper compatibility | Bash syntax passes; optional dArkOS variables are tolerated while sourcing helpers | High |
+| Logical display orientation | Host requests 640×480; no forced 90°/270° rotation or SDL/KMS/DRM backend | High for logical setup |
+| Physical LCD image | Not observed on a real R36S | Unconfirmed |
+| Input bridge | gptokeyb mapping and host key conversion are present; ARMHF smoke test reached a key event | Moderate |
+| Physical buttons | Not pressed in the sandbox | Unconfirmed |
+| Audio, saves, cutscenes and sustained play | Not physically exercised | Unconfirmed |
 
-## Teste de tela e renderização
+## Display and orientation
 
-A falha da versão anterior era um salto para endereço nulo durante o primeiro desenho, causado pelo símbolo `glHint` estar presente na tabela GLES, mas sem stub funcional no modo headless. Na versão corrigida, o símbolo foi implementado e o binário também contém os registros adicionais de `Graphics3D.getDpyFormat()` e `Parallax`.
+The supplied PS2 package was useful as a comparison because its retest documented a dArkOS issue where `DEVICE_NAME` had to be exported after PortMaster helpers and preserved through `sudo` so retrorun could select the correct R36S/RG351MP profile. That approach applies to retrorun-based cores.
 
-A execução corrigida em modo headless, com desenho habilitado, durou 60 segundos e terminou com status 0:
+Resident Evil 4 Mobile does not use retrorun. It creates its own SDL/OpenGL ES window. Therefore, copying a fixed 90° or 270° rotation from the PS2 wrapper would be unsafe. The final RE4 launcher leaves display backend selection to dArkOS/PortMaster, sets the native EGL selector when absent, and does not set `SDL_VIDEODRIVER`, `SDL_KMSDRM_ROTATION`, framebuffer orientation or DRM card selection.
 
-```text
-re4: draw frame 0
-re4: draw frame 1
-re4: draw frame 2
-re4: session ended after 3729 frames
-```
+The host's disassembly shows `SDL_CreateWindow` being called with width **640** and height **480**. The included screenshot is also 640×480 and displays horizontal gameplay with vertical letterboxing. This is the correct logical orientation for the R36S 640×480 panel. The actual LCD result still depends on the dArkOS image and Mali-G31 EGL/GLES driver [3].
 
-Também foi executada a rota SDL offscreen com bibliotecas ARMHF de EGL/GLES, sem `RE4_HEADLESS=1`. Essa execução passou pela criação de janela/contexto e processou aproximadamente 9.150 frames na sessão prolongada:
+## Controls
 
-```text
-re4: onSurfaceCreated returned
-re4: onSurfaceChanged returned
-re4: session ended after 9150 frames
-```
+The launcher loads PortMaster controls, preserves `SDL_GAMECONTROLLERCONFIG`, starts gptokeyb before the host and calls `pm_platform_helper` immediately before execution. The included mapping is:
 
-Esse segundo teste é especialmente importante: ele não apenas chama stubs headless; ele exercita a criação de contexto gráfico SDL/EGL e o caminho de renderização GLES. Assim, **a chance de o jogo abrir e gerar imagem no R36S é alta**.
+| R36S control | Virtual input | Host mapping |
+|---|---|---|
+| D-pad | Arrow keys | Android directional codes |
+| A / B | `z` / `x` | Android 96 / 97 |
+| X / Y | `a` / `q` | Android 102 / 104 |
+| L1 / R1 | `s` / `w` | Android 103 / 105 |
+| Start / Back | Enter / Escape | Android enter / back |
 
-A ressalva é que o backend offscreen usa Mesa por software, enquanto o R36S usa o backend gráfico próprio do ArkOS. Portanto, ainda pode haver diferença de viewport, escala, cores, stencil ou compatibilidade específica do driver. Não há evidência de que o jogo continuará com tela preta, mas a imagem física do LCD não foi comprovada.
+This confirms that the port is not missing an input path. It does not prove that every physical R36S revision reports the same button order; that requires a hardware test on the user's exact dArkOS image.
 
-Os padrões `bars`, `grid` e `text` também iniciaram e desenharam sem falhar. Eles são diagnósticos do caminho de tela; não representam a imagem real do jogo.
+## Runtime tests
 
-## Teste de áudio
+The final tree passed `bash -n` and the reprodutible release validator. The host loaded the ARMHF libraries under QEMU, completed the fake Android lifecycle (`JNI_OnLoad`, `onCreate`, `onResume`, `onSurfaceCreated`, `onSurfaceChanged`) and reached `draw frame 0`, `draw frame 1` and `draw frame 2`.
 
-O teste de áudio do host corrigido terminou com sucesso:
+A separate run with `SDL_VIDEODRIVER=dummy` failed because SDL's dummy backend does not provide an OpenGL context. That result is treated as a laboratory limitation, not as evidence that the dArkOS/Mali display path fails. No physical R36S was available for definitive LCD, controls or audio validation.
 
-```text
-re4: audio test passed: 44100 Hz, 1 channels, 1024 samples
-```
+## Installation
 
-Isso confirma que a camada SDL conseguiu abrir um dispositivo lógico e aceitar o formato PCM esperado. A versão corrigida também inclui o arquivo `data/monhun/Acv_Sound.bin.png`, que estava ausente na versão anterior.
+Extract the release ZIP directly into `/roms/ports/`, or into `/roms2/ports/` when the second ArkOS card is active. The archive's top level contains `Resident Evil 4 Mobile.sh` and `residentevil4/`; do not add another outer folder. Keep the host, `lib/`, `data/monhun/`, save directory and `.gptk` mapping together.
 
-O resultado não comprova que o áudio foi ouvido, pois o teste foi executado com `SDL_AUDIODRIVER=dummy`. Portanto, a avaliação é a seguinte:
+Do not replace DTBs, `boot.ini`, RetroArch, EGL or GLES files. If the screen is black, preserve `residentevil4/log.txt`; if the screen is rotated, record the dArkOS version and the values reported for device/display variables; if buttons fail, record which physical buttons were tested.
 
-> **O caminho de áudio está tecnicamente preparado e o teste sintético passou. Há boa probabilidade de o tom funcionar no R36S, desde que o ALSA e o mixer do ArkOS estejam normais. A música, os efeitos e as cutscenes ainda precisam de confirmação no alto-falante ou fone.**
+## Limitations
 
-No R36S, o primeiro teste recomendado é `Test Audio Tone.sh`. Se o tom for audível, isso confirma o caminho SDL/ALSA básico. Em seguida, o jogo deve ser testado para verificar efeitos e música.
+This release should be described as **theoretically compatible and ready for physical testing**, not as physically certified. The open items are the actual LCD image, Mali-G31 driver behavior, ALSA audio, button order, saves, cutscenes, sustained performance and clean return to EmulationStation.
 
-## Teste de controles
+## References
 
-O binário usa `SDL_PollEvent` e trata eventos SDL de tecla pressionada e liberada. O loop encaminha esses eventos para as rotinas Android fake `onKeyDown` e `onKeyUp`, que são usadas pelo núcleo do jogo.
+[1]: https://portmaster.games/packaging.html "PortMaster — Packaging Ports"
 
-A rotina de conversão de teclas contém códigos para as direções e para ações auxiliares. O log interno também registra um evento de teste:
+[2]: https://github.com/christianhaitian/PortMaster/blob/main/docs/packaging.md "PortMaster — packaging and controls documentation"
 
-```text
-re4: test key 19 down/up
-```
-
-Isso prova que existe uma ponte funcional entre o sistema de entrada e o código Android do jogo. A avaliação por controle é:
-
-| Controle | Avaliação |
-|---|---|
-| D-pad | **Boa probabilidade de funcionamento**; os códigos direcionais estão contemplados |
-| A/B/X/Y | **Provável**, mas a ação exata de cada botão depende do mapeamento SDL do ArkOS |
-| L/R | Há códigos auxiliares no conversor, mas não foram pressionados fisicamente |
-| Start/Select/FN | Podem depender do launcher e dos atalhos definidos na imagem ArkOS |
-| Pressionar e segurar | Não foi possível validar sem o aparelho |
-| Repetição de direção | Não foi possível validar sem o aparelho |
-
-Em outras palavras, **o caminho de controles está implementado**, não sendo um port sem entrada. O que permanece incerto é apenas o mapeamento físico final dos botões do R36S e se todas as ações do jogo estão associadas às teclas corretas.
-
-## Estabilidade e jogabilidade provável
-
-O núcleo passou pela inicialização JNI, `onCreate`, `onResume`, `onSurfaceCreated` e `onSurfaceChanged`. A versão corrigida não apresentou segmentation fault no primeiro frame nem durante os testes prolongados.
-
-Isso representa uma mudança de estado importante em relação à versão anterior: o port deixou de ser apenas um executável que carregava os dados e travava imediatamente. Agora ele **inicializa o núcleo, entra no ciclo de desenho e permanece processando frames**.
-
-Ainda não é possível afirmar que a campanha completa esteja jogável. Não foram confirmados diretamente no hardware:
-
-| Item pendente | Motivo |
-|---|---|
-| Movimento com D-pad | Ausência de controle físico no sandbox |
-| Ações, menus e combate | Necessidade de pressionar A/B/X/Y e observar a resposta do jogo |
-| Áudio do jogo | Ausência de alto-falante/fone físico |
-| Cutscenes | Dependem do caminho de vídeo e dos dados proprietários |
-| Save/load | Não houve sessão física para criar e recarregar um save |
-| Retorno ao EmulationStation | Depende do comportamento do launcher no ArkOS real |
-
-## Compatibilidade provável com ArkOS
-
-A estrutura do pacote é adequada ao modelo de instalação do ArkOS: a pasta inteira `Resident Evil 4 Mobile` deve ser copiada para `/roms/ports/`. O launcher calcula o próprio diretório, não depende do caminho do sandbox e não força `libGL.so.1`, evitando desviar o backend GLES nativo do aparelho.
-
-O carregador também possui fallbacks para variantes versionadas das bibliotecas EGL/GLES, o que melhora a compatibilidade com diferentes imagens ArkOS. O host é ARMHF hard-float, compatível com a arquitetura normalmente usada no R36S.
-
-## Instruções finais para o teste no R36S
-
-Copie a pasta completa `Resident Evil 4 Mobile` para `/roms/ports/`. Não copie somente `re4_host`: os diretórios `lib/`, `data/monhun/`, `save/` e os scripts precisam permanecer juntos.
-
-Execute na seguinte ordem:
-
-1. `Test Audio Tone.sh`: confirme se o tom de 440 Hz é ouvido.
-2. `Test Screen Bars.sh`: verifique se a tela acende e mostra as faixas de cor.
-3. `Test Screen Grid.sh`: verifique se a grade não está deformada ou cortada.
-4. `Test Screen Text.sh`: confirme contraste e atualização estável.
-5. `Resident Evil 4 Mobile.sh`: aguarde pelo menos um minuto e teste D-pad, A/B/X/Y, L/R e Start/B.
-
-Se o jogo iniciar com imagem, responder ao D-pad e aos botões principais e emitir áudio, então esta versão pode ser considerada **funcional na prática**. Se a tela ficar preta, o teste de barras e grade ajudará a separar problema do LCD/driver de problema do jogo.
-
-## Classificação final
-
-**Classificação recomendada: provavelmente jogável no R36S, com alta confiança de inicialização e renderização, confiança moderada em áudio e controles e confirmação física ainda necessária para o conjunto completo.**
-
-A versão corrigida merece ser testada no aparelho. Diferentemente da versão anterior, há evidência técnica suficiente para dizer que **não deve mais travar no primeiro frame** e que **há uma probabilidade real de mostrar a imagem do jogo** no R36S/ArkOS.
+[3]: https://github.com/southoz/dArkOSRE-R36 "dArkOSRE-R36 — dArkOS R36 source/rootfs reference"

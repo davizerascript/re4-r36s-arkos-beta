@@ -1,55 +1,54 @@
-# Resident Evil 4 Mobile — R36S/ArkOS Beta
+# Resident Evil 4 Mobile — R36S/dArkOS PortMaster
 
-> **Versão BETA para testes.** Este pacote é experimental e foi preparado para avaliação no R36S com ArkOS. Faça backup do cartão antes da instalação e relate qualquer falha com o modelo da imagem ArkOS, o log e uma descrição do comportamento observado.
+> **Experimental beta port for testing.** This project adapts the supplied Resident Evil 4 Mobile ARMHF build to the PortMaster/dArkOS flow on R36S-class devices. It is not an official Capcom release, an emulator, or a remake.
 
-## Download completo
+## Corrected package
 
-Baixe o arquivo completo na seção [Releases](../../releases). O ZIP inclui o port inteiro: executável ARMHF, bibliotecas nativas, dados do jogo, arquivo de áudio, scripts de diagnóstico, diretório de save e documentação.
-
-**Arquivo da beta:** `Resident-Evil-4-Mobile-R36S-ArkOS-BETA-v0.2.0.zip`  
-**SHA-256:** `aa0d02e42caa1494c60c77b1425735a262b41af47f2e19e2ad7617f7b5b5e239`  
-**Tamanho:** aproximadamente 95,7 MB
-
-## Instalação
-
-Extraia o ZIP e copie a pasta completa `Resident Evil 4 Mobile` para a pasta de ports da partição `EASYROMS`, normalmente:
+Download the complete asset from the [v0.3.1-beta release](../../releases/tag/v0.3.1-beta):
 
 ```text
-/roms/ports/
+Resident-Evil-4-Mobile-R36S-dArkOS-PortMaster-fixed-v0.3.1.zip
+SHA-256: 8c4df72a1e6ff89e1fa9fb274c7fb92580bc06d5113b867cdce9b2c8cfad497d
+Size: 96,071,786 bytes
 ```
 
-Não copie somente o executável. Os diretórios `lib/`, `data/monhun/`, `save/` e os scripts precisam permanecer dentro da pasta do port. Depois, abra o menu **Ports** do ArkOS e execute `Resident Evil 4 Mobile.sh`.
+The archive has the correct PortMaster installation level. Its top level contains `Resident Evil 4 Mobile.sh` and `residentevil4/`; do not wrap it in another directory.
 
-## Testes recomendados
+## Installation
 
-Para separar problemas de áudio, tela e jogo, execute primeiro os testes incluídos:
+Extract the archive into the PortMaster ports directory. On a usual single-card dArkOS/R36S setup, the resulting paths are:
 
-| Script | Finalidade |
+```text
+/roms/ports/Resident Evil 4 Mobile.sh
+/roms/ports/residentevil4/
+```
+
+When ArkOS is using the second card, use `/roms2/ports/` instead. Keep `re4_host`, `lib/`, `data/monhun/`, `save/`, the `.gptk` file and the launcher together. The package is **ARMHF**, not AArch64.
+
+## Display and controls
+
+The host requests a **horizontal 640×480** SDL/OpenGL ES window. The launcher does not force a 90° or 270° rotation, KMS/DRM card, or SDL video backend; dArkOS/PortMaster keeps control of the native display path. The included screenshot is 640×480 with the game's horizontal letterboxed presentation.
+
+The launcher loads PortMaster controls, starts gptokeyb, preserves the device's SDL controller configuration and calls `pm_platform_helper` before launching the host. The included mapping is:
+
+| R36S control | Virtual input |
 |---|---|
-| `Test Audio Tone.sh` | Testa o caminho SDL/ALSA e o alto-falante ou fone |
-| `Test Screen Bars.sh` | Testa cores, orientação e preenchimento da tela |
-| `Test Screen Grid.sh` | Testa escala e deformação do viewport 640×480 |
-| `Test Screen Text.sh` | Testa contraste e atualização do framebuffer |
-| `Resident Evil 4 Mobile.sh` | Inicia o jogo beta |
+| D-pad | Arrow keys |
+| A / B | `z` / `x` |
+| X / Y | `a` / `q` |
+| L1 / R1 | `s` / `w` |
+| Start / Back | Enter / Escape |
 
-No jogo, teste o D-pad, A/B/X/Y, L/R, Start e B. Aguarde pelo menos um minuto para verificar estabilidade, áudio e resposta dos controles.
+The mapping is technically connected to the host's Android-key bridge, but physical button behavior still requires testing on the actual R36S.
 
-## Estado conhecido da beta
+## Validation status
 
-A versão corrigida passou pelo primeiro frame e por testes prolongados no host ARMHF. Em ambiente de teste com SDL/EGL/GLES, o núcleo iniciou, criou o contexto gráfico e processou milhares de frames sem o travamento de renderização observado na versão anterior. O teste sintético de áudio também passou em 44.100 Hz, mono, com buffer de 1.024 amostras.
+The corrected tree passed the local release validator with **52 files, 35 assets and zero errors**, and passed the PortMaster release checker. The ARMHF host loaded its native libraries under QEMU, completed the fake Android lifecycle, created its rendering path in headless mode and reached `draw frame 0`, `draw frame 1` and `draw frame 2`.
 
-A validação física completa ainda depende do R36S real. Em particular, o LCD/driver Mali, o áudio audível, o mapeamento físico dos botões, os saves, as cutscenes e o retorno ao EmulationStation podem variar conforme a imagem ArkOS instalada. Por isso, esta publicação deve ser tratada como **beta de teste**, não como uma versão final.
+This is not a physical R36S certification. LCD/Mali-G31 presentation, ALSA audio, physical buttons, save/load, cutscenes, sustained gameplay and clean return to EmulationStation still require testing on the exact dArkOS image. A generic SDL dummy video backend cannot validate OpenGL because it has no GL context; that laboratory limitation is not evidence of a device failure.
 
-## Relato de problemas
+## Credits and distribution
 
-Ao relatar uma falha, informe a versão exata do ArkOS, se a falha ocorreu nos testes de tela, no teste de áudio ou no jogo, e o último texto exibido no log. Se possível, inclua uma fotografia ou screenshot da tela, sem enviar o cartão inteiro nem dados pessoais.
+Port beta and supplied files are credited to **[@melo._.071](https://www.instagram.com/melo._.071/)**. The original game and proprietary assets remain the property of their respective rights holders. Do not redistribute the package without appropriate permission. This repository is not affiliated with Capcom.
 
-## Créditos
-
-Créditos pelo port beta e pela disponibilização dos arquivos: **Instagram [@melo._.071](https://www.instagram.com/melo._.071/)**.
-
-Este repositório é mantido para facilitar o teste comunitário da versão beta no R36S/ArkOS. Não representa uma versão oficial de Resident Evil 4 nem possui vínculo com a Capcom.
-
-## Licença e distribuição
-
-Os arquivos deste repositório e da release são disponibilizados conforme a autorização do responsável pelo port beta. Não remova os créditos, não apresente o projeto como oficial e respeite os direitos dos titulares dos componentes originais do jogo.
+See [`docs/VALIDATION_REPORT.md`](docs/VALIDATION_REPORT.md) for the detailed audit and [`RELEASE_NOTES_v0.3.1-beta.md`](RELEASE_NOTES_v0.3.1-beta.md) for the change summary.
