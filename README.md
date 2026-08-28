@@ -1,15 +1,17 @@
 # Resident Evil 4 Mobile — R36S/dArkOS PortMaster
 
 > **Experimental beta port for testing.** This project adapts the supplied Resident Evil 4 Mobile ARMHF build to the PortMaster/dArkOS flow on R36S-class devices. It is not an official Capcom release, an emulator, or a remake.
+>
+> **Compatibility fix v0.3.2-beta:** dArkOSRE and dArkOSEN may report `DEVICE_ARCH=aarch64` while PortMaster still supports 32-bit ARM ports. The launcher now relies on PortMaster's `PORT_32BIT=Y` signal and no longer aborts with the misleading “Este port requer ARMHF” message. The supplied host remains an ARMHF ELF; if the firmware lacks 32-bit execution support, the actual execution error is recorded in `residentevil4/log.txt`.
 
 ## Corrected package
 
-Download the complete asset from the [v0.3.1-beta release](../../releases/tag/v0.3.1-beta):
+Download the complete asset from the [v0.3.2-beta release](../../releases/tag/v0.3.2-beta):
 
 ```text
-Resident-Evil-4-Mobile-R36S-dArkOS-PortMaster-fixed-v0.3.1.zip
-SHA-256: 8c4df72a1e6ff89e1fa9fb274c7fb92580bc06d5113b867cdce9b2c8cfad497d
-Size: 96,071,786 bytes
+Resident-Evil-4-Mobile-R36S-dArkOS-PortMaster-fixed-v0.3.2.zip
+SHA-256: 4802981d3d12fdb61a9066d4715fdd2c9f447fbd0985587068ea8b6c119011be
+Size: 96,072,150 bytes
 ```
 
 The archive has the correct PortMaster installation level. Its top level contains `Resident Evil 4 Mobile.sh` and `residentevil4/`; do not wrap it in another directory.
@@ -23,7 +25,7 @@ Extract the archive into the PortMaster ports directory. On a usual single-card 
 /roms/ports/residentevil4/
 ```
 
-When ArkOS is using the second card, use `/roms2/ports/` instead. Keep `re4_host`, `lib/`, `data/monhun/`, `save/`, the `.gptk` file and the launcher together. The package is **ARMHF**, not AArch64.
+When ArkOS is using the second card, use `/roms2/ports/` instead. Keep `re4_host`, `lib/`, `data/monhun/`, `save/`, the `.gptk` file and the launcher together. The package contains an **ARMHF** host, but the launcher uses PortMaster's `PORT_32BIT=Y` compatibility signal and no longer rejects dArkOSRE/dArkOSEN merely because they report `DEVICE_ARCH=aarch64`. The package is not an AArch64 host.
 
 ## Display and controls
 
@@ -51,4 +53,4 @@ This is not a physical R36S certification. LCD/Mali-G31 presentation, ALSA audio
 
 Port beta and supplied files are credited to **[@melo._.071](https://www.instagram.com/melo._.071/)**. The original game and proprietary assets remain the property of their respective rights holders. Do not redistribute the package without appropriate permission. This repository is not affiliated with Capcom.
 
-See [`docs/VALIDATION_REPORT.md`](docs/VALIDATION_REPORT.md) for the detailed audit and [`RELEASE_NOTES_v0.3.1-beta.md`](RELEASE_NOTES_v0.3.1-beta.md) for the change summary.
+See [`docs/VALIDATION_REPORT.md`](docs/VALIDATION_REPORT.md) for the detailed audit and [`RELEASE_NOTES_v0.3.2-beta.md`](RELEASE_NOTES_v0.3.2-beta.md) for the change summary.
