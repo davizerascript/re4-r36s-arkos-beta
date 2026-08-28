@@ -70,8 +70,36 @@ export XDG_DATA_HOME="$CONFDIR"
 export SDL_VIDEO_EGL_DRIVER="${SDL_VIDEO_EGL_DRIVER:-libEGL.so}"
 export SDL_AUDIODRIVER="${SDL_AUDIODRIVER:-alsa}"
 export SDL_GAMECONTROLLERCONFIG="${sdl_controllerconfig:-${SDL_GAMECONTROLLERCONFIG:-}}"
+# Compatibility defaults for Mali-G31/EGL implementations. They reduce the
+# requested framebuffer features without rotating or scaling the LCD.
+export RE4_GL_MINIMAL="${RE4_GL_MINIMAL:-1}"
+export RE4_GL_NO_STENCIL="${RE4_GL_NO_STENCIL:-1}"
+export RE4_DESKTOP_GL="${RE4_DESKTOP_GL:-0}"
 if [ -n "${DEVICE_NAME:-}" ]; then export DEVICE_NAME; fi
-export LD_LIBRARY_PATH="$GAMEDIR/lib:${LD_LIBRARY_PATH:-}"
+
+# Match the official PortMaster SDL/OpenGL launcher flow. The CFW-specific
+# libgl file may select libgl4es/libGLESv1_CM and device EGL paths needed by
+# Android Mobile GLES1 code; without it the host can run its frame loop while
+# presenting only a blank surface.
+set +u
+if [ -f "${controlfolder}/libgl_${CFW_NAME:-}.txt" ]; then
+    source "${controlfolder}/libgl_${CFW_NAME:-}.txt"
+elif [ -f "${controlfolder}/libgl_default.txt" ]; then
+    source "${controlfolder}/libgl_default.txt"
+fi
+set -u
+# The original host was linked against GLIBC_2.38, while some dArkOSRE/dArkOSEN
+# images expose an older /lib32. Prefer the self-contained ARMHF loader/runtime
+# shipped in this experimental build, but keep system paths available for GLES,
+# ALSA and other device libraries.
+RUNTIME_DIR="$GAMEDIR/runtime/armhf"
+ARMHF_LOADER=""
+if [ -x "$RUNTIME_DIR/ld-linux-armhf.so.3" ] && [ -s "$RUNTIME_DIR/libc.so.6" ]; then
+    ARMHF_LOADER="$RUNTIME_DIR/ld-linux-armhf.so.3"
+    export LD_LIBRARY_PATH="$RUNTIME_DIR:$GAMEDIR/lib:${LD_LIBRARY_PATH:-}:/lib32:/usr/lib32:/lib:/usr/lib:/lib/arm-linux-gnueabihf:/usr/lib/arm-linux-gnueabihf"
+else
+    export LD_LIBRARY_PATH="$GAMEDIR/lib:${LD_LIBRARY_PATH:-}"
+fi
 
 # The host is an ARMHF ELF, but PortMaster may report the firmware/kernel
 # environment as aarch64 even when 32-bit ARM execution is enabled. `PORT_32BIT=Y`
@@ -80,6 +108,11 @@ export LD_LIBRARY_PATH="$GAMEDIR/lib:${LD_LIBRARY_PATH:-}"
 # the real exec status is logged below instead of showing a false preflight error.
 printf 'device_arch_reported=%s\n' "${DEVICE_ARCH:-unset}"
 printf 'port_32bit=%s\n' "${PORT_32BIT:-unset}"
+printf 'armhf_loader=%s\n' "${ARMHF_LOADER:-system-loader}"
+printf 'portmaster_gl_config=%s\n' "${controlfolder}/libgl_${CFW_NAME:-default}.txt"
+printf 're4_gl_minimal=%s\n' "$RE4_GL_MINIMAL"
+printf 're4_gl_no_stencil=%s\n' "$RE4_GL_NO_STENCIL"
+printf 're4_desktop_gl=%s\n' "$RE4_DESKTOP_GL"
 
 # The original upload carried real binary assets with an extra .png suffix.
 # The release tree contains the actual names expected by FileManager.
@@ -122,6 +155,11 @@ required_files=(
     "data/monhun/res4.m4v"
     "data/monhun/eu_font_U16le.fnt"
     "data/monhun/jp_font_U16le.fnt"
+    "runtime/armhf/ld-linux-armhf.so.3"
+    "runtime/armhf/libc.so.6"
+    "runtime/armhf/libm.so.6"
+    "runtime/armhf/libstdc++.so.6"
+    "runtime/armhf/libgcc_s.so.1"
 )
 missing=0
 for rel in "${required_files[@]}"; do
@@ -158,6 +196,10 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-"$GAMEDIR/re4_host" "$GAMEDIR"
+if [ -n "$ARMHF_LOADER" ]; then
+    "$ARMHF_LOADER" --library-path "$LD_LIBRARY_PATH" "$GAMEDIR/re4_host" "$GAMEDIR"
+else
+    "$GAMEDIR/re4_host" "$GAMEDIR"
+fi
 status=$?
 exit "$status"

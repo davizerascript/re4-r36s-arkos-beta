@@ -3,7 +3,8 @@
   "name": "residentevil4.zip",
   "items": [
     "Resident Evil 4 Mobile.sh",
-    "residentevil4/"
+    "residentevil4/",
+    "SCREEN_BLACK_FIX_v0.3.4-beta.md"
   ],
   "items_opt": [],
   "attr": {
@@ -11,7 +12,7 @@
     "porter": [
       "Manus_AI"
     ],
-    "desc": "Experimental ARMHF port of the Resident Evil 4 Mobile engine for 640x480 Linux handhelds. Includes the supplied game data and native libraries. Audio and video playback are not complete in this build and hardware validation on the R36S is still required.",
+    "desc": "Experimental ARMHF port of the Resident Evil 4 Mobile engine for 640x480 Linux handhelds. Includes a bundled ARMHF runtime for older dArkOSRE/dArkOSEN glibc images. Audio and video playback are not complete in this build and hardware validation on the R36S is still required.",
     "desc_md": "**Experimental port for R36S/dArkOS/dArkOSRE/dArkOSEN.** The game data and ARMHF host are included in this personal-use package. `PORT_32BIT=Y` is used for PortMaster compatibility; the launcher does not reject a firmware merely because it reports `DEVICE_ARCH=aarch64`. LCD rendering, physical controls, audio, cutscenes, saves and clean return to EmulationStation must still be validated on the target device.",
     "inst": "All files are included in this package for personal use. Install on an ARMHF dArkOS/PortMaster system with the port folder intact.",
     "inst_md": "Copy the archive contents to the PortMaster ports directory. Do not rename files inside `residentevil4/data/monhun/`; the extensions are the original engine extensions, not PNG files. The target must provide a working SDL2/GLES1-compatible display and ALSA audio path. This build uses PortMaster's `PORT_32BIT=Y` compatibility signal and no longer blocks on the reported `DEVICE_ARCH` value.",
@@ -29,6 +30,6 @@
     "arch": [
       "armhf"
     ],
-    "min_glibc": "2.38"
+    "min_glibc": ""
   }
 }

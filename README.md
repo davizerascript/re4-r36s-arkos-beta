@@ -43,6 +43,10 @@ The launcher loads PortMaster controls, starts gptokeyb, preserves the device's 
 
 The mapping is technically connected to the host's Android-key bridge, but physical button behavior still requires testing on the actual R36S.
 
+## Experimental screen-fix build v0.3.4-beta
+
+The physical test reached the game lifecycle and processed 28,810 frames but showed a blank LCD. The new experimental build sources the PortMaster `libgl_<CFW_NAME>.txt`/`libgl_default.txt` configuration and defaults `RE4_GL_MINIMAL=1`, `RE4_GL_NO_STENCIL=1` and `RE4_DESKTOP_GL=0` for Mali-G31/EGL compatibility. It does not change the horizontal 640×480 orientation or claim physical gameplay validation. Download it from the [v0.3.4-beta release](https://github.com/davizerascript/re4-r36s-arkos-beta/releases/tag/v0.3.4-beta).
+
 ## Validation status
 
 The corrected tree passed the local release validator with **52 files, 35 assets and zero errors**, and passed the PortMaster release checker. The ARMHF host loaded its native libraries under QEMU, completed the fake Android lifecycle, created its rendering path in headless mode and reached `draw frame 0`, `draw frame 1` and `draw frame 2`.
@@ -53,4 +57,4 @@ This is not a physical R36S certification. LCD/Mali-G31 presentation, ALSA audio
 
 Port beta and supplied files are credited to **[@melo._.071](https://www.instagram.com/melo._.071/)**. The original game and proprietary assets remain the property of their respective rights holders. Do not redistribute the package without appropriate permission. This repository is not affiliated with Capcom.
 
-See [`docs/VALIDATION_REPORT.md`](docs/VALIDATION_REPORT.md) for the detailed audit and [`RELEASE_NOTES_v0.3.2-beta.md`](RELEASE_NOTES_v0.3.2-beta.md) for the change summary.
+See [`docs/VALIDATION_REPORT.md`](docs/VALIDATION_REPORT.md) for the detailed audit, [`RELEASE_NOTES_v0.3.2-beta.md`](RELEASE_NOTES_v0.3.2-beta.md) for the previous compatibility fix and [`SCREEN_BLACK_FIX_v0.3.4-beta.md`](SCREEN_BLACK_FIX_v0.3.4-beta.md) for the current experimental screen fix.
